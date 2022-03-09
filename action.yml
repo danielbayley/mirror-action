@@ -1,0 +1,89 @@
+name: Mirror files action
+author: Daniel Bayley
+description: GitHub action to easily mirror files between repositories.
+branding:
+  icon: copy
+  color: black
+
+inputs:
+  git_author_name:
+    description: GIT_AUTHOR_NAME or github.actor
+    required: false
+    default: ${{github.actor}}
+
+  git_author_email:
+    description: GIT_AUTHOR_EMAIL or github.event.pusher.email
+    required: false
+    default: ${{github.event.pusher.email}}
+
+  git_committer_name:
+    description: GIT_COMMITTER_NAME or inputs.git_author_name
+    required: false
+
+  git_committer_email:
+    description: GIT_COMMITTER_EMAIL or inputs.git_author_email
+    required: false
+
+  github_token:
+    description: Required unless env.GITHUB_TOKEN is set. Generate an access token, then add to your repository secrets.
+    required: false
+
+  source_files:
+    description: Specify an [extended] glob pattern of matching files to copy.
+    required: true
+
+  source_repo:
+    description: Optionally specify a different repository source to copy files from.
+    required: false
+
+  target_repo:
+    description: Specify the target repository. The owner will match the source repo if only the name is given.
+    required: true
+
+  target_path:
+    description: Optionally specify a different target file path other than the repository root.
+    required: false
+
+  source_branch:
+    description: Optionally specify a source branch of your repository.
+    required: false
+
+  target_branch:
+    description: Optionally specify a target branch of the target repo.
+    required: false
+
+  branch:
+    description: Specify if both branches are the same, but differ from the default.
+    required: false
+    default: main
+
+  commit_message:
+    description: The git commit --message to appear on the target repository.
+    required: false
+
+runs:
+  using: composite
+  steps:
+  - uses: actions/checkout@v3
+    with:
+      repository: ${{inputs.source_repo || github.repository}}
+      ref: ${{inputs.source_branch || inputs.branch}}
+
+  - id: mirror
+    env:
+      GIT_AUTHOR_NAME: ${{env.GIT_AUTHOR_NAME || inputs.git_author_name}}
+      GIT_AUTHOR_EMAIL: ${{env.GIT_AUTHOR_EMAIL || inputs.git_author_email}}
+      GIT_COMMITTER_NAME: ${{env.GIT_COMMITTER_NAME || inputs.git_author_name}}
+      GIT_COMMITTER_EMAIL: ${{env.GIT_COMMITTER_EMAIL || inputs.git_author_email}}
+      GITHUB_TOKEN: ${{env.GITHUB_TOKEN || inputs.github_token}}
+      source_files: ${{inputs.source_files}}
+      source_repo: ${{inputs.source_repo}}
+      target_repo: ${{inputs.target_repo}}
+      target_path: ${{inputs.target_path}}
+      source_branch: ${{inputs.source_branch}}
+      target_branch: ${{inputs.target_branch}}
+      branch: ${{inputs.branch}}
+      commit_message: ${{inputs.commit_message}}
+
+    shell: /bin/zsh --no-rcs --err-exit --pipe-fail {0}
+    run: source $GITHUB_ACTION_PATH/action.zsh
